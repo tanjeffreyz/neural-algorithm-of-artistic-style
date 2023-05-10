@@ -139,3 +139,7 @@ if __name__ == '__main__':
     style_test = torch.randn(1, 3, 1234, 1234)
     model = NeuralStyleTransfer(content_test, style_test, CONTENT_LAYERS, STYLE_LAYERS)
     print(model)
+
+    # Check that model weight gradients won't be calculated
+    model.requires_grad_(False)
+    assert all(not p.requires_grad for p in model.parameters())
