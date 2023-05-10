@@ -1,6 +1,8 @@
 import torch
+import shutil
 import os
 import numpy as np
+from torchvision.transforms.functional import resize
 from torchvision.io import read_image, write_png
 from models import NeuralStyleTransfer
 from torch.utils.tensorboard import SummaryWriter
@@ -19,6 +21,11 @@ content_img = torch.unsqueeze(content_img, 0).to(DEVICE)
 style_img = read_image(os.path.join('input', 'style', STYLE_IMAGE)).type(torch.FloatTensor)
 style_img /= 256
 style_img = torch.unsqueeze(style_img, 0).to(DEVICE)
+
+# Resize content image to appropriate size
+size = content_img.shape[-2:]
+new_size = [int(size[0] * SCALE_FACTOR), int(size[1] * SCALE_FACTOR)]
+content_img = resize(content_img, new_size)
 
 # Build the model
 model = NeuralStyleTransfer(content_img, style_img, CONTENT_LAYERS, STYLE_LAYERS)
@@ -61,7 +68,9 @@ def finish():
     content_name, _ = os.path.splitext(CONTENT_IMAGE)
     style_name, _ = os.path.splitext(STYLE_IMAGE)
     write_png(img, os.path.join(root, f'{content_name}-{style_name}.png'))
-    exit(0)
+
+    # Save configuration as well
+    shutil.copyfile('config.py', os.path.join(root, 'config.py'))
 
 
 # Train
