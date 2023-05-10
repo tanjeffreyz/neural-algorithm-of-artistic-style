@@ -1,4 +1,5 @@
 import torch
+import atexit
 import shutil
 import os
 import numpy as np
@@ -25,11 +26,12 @@ style_img = torch.unsqueeze(style_img, 0).to(DEVICE)
 model = NeuralStyleTransfer(content_img, style_img, CONTENT_LAYERS, STYLE_LAYERS)
 
 # Can either start from content_image or random white noise
-if USE_WHITE_NOISE:
+if MODE == 0:
     result = torch.rand(content_img.shape).to(DEVICE)
-else:
+elif MODE == 1:
     result = content_img.clone().contiguous()      # LBGFS requires gradients to be contiguously
-
+else:
+    raise RuntimeError(f'Invalid value for MODE: {MODE}')
 
 # Optimizing content image to fit the style, freeze model weights
 result.requires_grad_(True)
@@ -72,6 +74,9 @@ def finish():
     # Save configuration as well
     shutil.copyfile('config.py', os.path.join(root, 'config.py'))
 
+
+# Save losses and result on exit
+atexit.register(finish)
 
 # Train
 i = [0]
@@ -116,6 +121,3 @@ while i[0] < NUM_ITERS:
 
     # Update the content image
     optimizer.step(closure)
-
-# Save final result
-finish()
