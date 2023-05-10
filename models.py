@@ -1,4 +1,5 @@
 import torch.nn as nn
+from torchvision.models import vgg19
 from config import *
 
 
@@ -50,10 +51,35 @@ class NeuralStyleTransfer(nn.Module):
     def __init__(self):
         super().__init__()
 
+        vgg_model = vgg19(pretrained=True)
+        vgg_layers = vgg_model.features.to(DEVICE).eval()
         self.model = nn.Sequential(Normalize())
 
+        i = 0
+        for layer in vgg_layers.children():
+            if isinstance(layer, nn.Conv2d):
+                i += 1      # Conv layer signals a new block, increment block number
+                name = f'conv_{i}'
+            elif isinstance(layer, nn.BatchNorm2d):
+                name = f'bn_{i}'
+            elif isinstance(layer, nn.ReLU):
+                name = f'relu_{i}'
+                layer = nn.ReLU(inplace=False)
+            elif isinstance(layer, nn.MaxPool2d):
+                name = f'avgpool_{i}'
+                layer = nn.AvgPool2d(       # Paper said avg pool produced better results
+                    kernel_size=layer.kernel_size,
+                    stride=layer.stride,
+                    padding=layer.padding
+                )
+            else:
+                continue
+
+
+
+
     def forward(self, x):
-        return
+        return self.model.forward(x)
 
 
 if __name__ == '__main__':
