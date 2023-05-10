@@ -10,7 +10,7 @@ from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from tqdm import tqdm
 
-device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
+
 writer = SummaryWriter()
 now = datetime.now()
 
