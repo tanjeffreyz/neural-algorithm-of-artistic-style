@@ -23,15 +23,21 @@ style_img = torch.unsqueeze(style_img, 0).to(DEVICE)
 
 # Build the model
 model = NeuralStyleTransfer(content_img, style_img, CONTENT_LAYERS, STYLE_LAYERS)
-content_img = content_img.clone().contiguous()      # LBGFS requires gradients to be contiguously
+
+# Can either start from content_image or random white noise
+if USE_WHITE_NOISE:
+    result = torch.rand(content_img.shape).to(DEVICE)
+else:
+    result = content_img.clone().contiguous()      # LBGFS requires gradients to be contiguously
+
 
 # Optimizing content image to fit the style, freeze model weights
-content_img.requires_grad_(True)
+result.requires_grad_(True)
 model.requires_grad_(False)
 
 # Optimizer
-# optimizer = torch.optim.Adam([content_img], lr=1E-3)
-optimizer = torch.optim.LBFGS([content_img])
+# optimizer = torch.optim.Adam([result], lr=1E-3)
+optimizer = torch.optim.LBFGS([result])
 
 # Create folders for this run
 root = os.path.join(
@@ -54,8 +60,8 @@ def finish():
     np.save(os.path.join(root, 'total_losses'), total_losses)
 
     with torch.no_grad():
-        content_img.clamp_(0, 1)
-    img = content_img.cpu()
+        result.clamp_(0, 1)
+    img = result.cpu()
     img *= 256      # Convert back to RGB values
     img = torch.squeeze(img.type(torch.uint8), dim=0)   # Cast back to byte tensor and remove batch dimension
 
@@ -72,10 +78,10 @@ i = [0]
 while i[0] < NUM_ITERS:
     def closure():
         with torch.no_grad():
-            content_img.clamp_(0, 1)
+            result.clamp_(0, 1)
 
         optimizer.zero_grad()
-        model.forward(content_img)
+        model.forward(result)
 
         # Calculate total loss from specified layers
         content_loss = 0
