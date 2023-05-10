@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-import torchvision.transforms.functional
+from torchvision.transforms.functional import resize
 from torchvision.models import vgg19
 from config import DEVICE
 
@@ -59,7 +59,7 @@ class NeuralStyleTransfer(nn.Module):
         assert len(style_img.shape) == 4, 'Style image tensor must be 4-dimensional: BxCxWxH'
 
         # Resize style image to be same size as content image
-        style_img = torchvision.transforms.functional.resize(style_img, content_img.shape[-2:])
+        style_img = resize(style_img, content_img.shape[-2:])
         style_img = style_img.to(DEVICE)
         content_img = content_img.to(DEVICE)
 
@@ -95,12 +95,12 @@ class NeuralStyleTransfer(nn.Module):
 
             # Add loss layers after specified layers
             if name in content_layers:
-                content_features = self.model(content_img)
+                content_features = self.model.forward(content_img)
                 content_loss_layer = ContentLoss(content_features).to(DEVICE)
                 self.model.add_module(f'content_loss_{i}', content_loss_layer)
                 self.content_loss_layers.append(content_loss_layer)
             if name in style_layers:
-                style_features = self.model(style_img)
+                style_features = self.model.forward(style_img)
                 style_loss_layer = StyleLoss(style_features).to(DEVICE)
                 self.model.add_module(f'style_loss_{i}', style_loss_layer)
                 self.style_loss_layers.append(style_loss_layer)

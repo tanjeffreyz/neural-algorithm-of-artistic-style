@@ -9,8 +9,8 @@ STYLE_IMAGE = 'starry_night.jpg'
 CONTENT_LAYERS = ['conv_4']
 STYLE_LAYERS = ['conv_1', 'conv_2', 'conv_3', 'conv_4', 'conv_5']
 
-CONTENT_WEIGHT = 1E-6
-STYLE_WEIGHT = 1
+CONTENT_WEIGHT = 1
+STYLE_WEIGHT = 1E6
 
 LEARNING_RATE = 1E-3
 NUM_ITERS = 1000

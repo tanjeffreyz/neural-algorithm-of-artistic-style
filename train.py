@@ -68,15 +68,17 @@ for i in tqdm(range(NUM_ITERS), desc='Iteration'):
     model.forward(content_img)
 
     # Calculate total loss from specified layers
-    style_loss = 0
-    for layer in model.style_loss_layers:
-        style_loss += layer.loss
-
     content_loss = 0
     for layer in model.content_loss_layers:
         content_loss += layer.loss
+    content_loss *= CONTENT_WEIGHT
 
-    total_loss = CONTENT_WEIGHT * content_loss + STYLE_WEIGHT * style_loss
+    style_loss = 0
+    for layer in model.style_loss_layers:
+        style_loss += layer.loss
+    style_loss *= STYLE_WEIGHT
+
+    total_loss = content_loss + style_loss
     total_loss.backward()
 
     # Update the content image
