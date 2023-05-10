@@ -1,5 +1,6 @@
 import torch
 import torch.nn as nn
+import torch.nn.functional as F
 from torchvision.transforms.functional import resize
 from torchvision.models import vgg19
 from config import DEVICE
@@ -33,7 +34,7 @@ class ContentLoss(nn.Module):
         self.loss = None
 
     def forward(self, x):
-        self.loss = torch.sum((self.content_features - x) ** 2) / 2
+        self.loss = F.mse_loss(self.content_features, x)
         return x
 
 
@@ -45,7 +46,7 @@ class StyleLoss(nn.Module):
 
     def forward(self, x):
         x_gram = get_gram_matrix(x)
-        self.loss = torch.sum((self.style_gram - x_gram) ** 2)
+        self.loss = F.mse_loss(self.style_gram, x_gram)
         return x
 
 
