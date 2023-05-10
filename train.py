@@ -5,7 +5,6 @@ from torchvision.io import read_image, write_png
 from models import NeuralStyleTransfer
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
-from tqdm import tqdm
 from config import *
 
 
@@ -23,16 +22,15 @@ style_img = torch.unsqueeze(style_img, 0).to(DEVICE)
 
 # Build the model
 model = NeuralStyleTransfer(content_img, style_img, CONTENT_LAYERS, STYLE_LAYERS)
+content_img = content_img.clone().contiguous()      # LBGFS requires gradients to be contiguously
 
 # Optimizing content image to fit the style, freeze model weights
 content_img.requires_grad_(True)
 model.requires_grad_(False)
 
 # Optimizer
-optimizer = torch.optim.Adam(
-    [content_img],            # Optimizing content image, not model weights!
-    lr=LEARNING_RATE
-)
+# optimizer = torch.optim.Adam([content_img], lr=1E-3)
+optimizer = torch.optim.LBFGS([content_img])
 
 # Create folders for this run
 root = os.path.join(
@@ -49,52 +47,66 @@ style_losses = np.empty((2, 0))
 total_losses = np.empty((2, 0))
 
 
-def save():
+def finish():
     np.save(os.path.join(root, 'content_losses'), content_losses)
     np.save(os.path.join(root, 'style_losses'), style_losses)
     np.save(os.path.join(root, 'total_losses'), total_losses)
+
+    with torch.no_grad():
+        content_img.clamp_(0, 1)
     img = content_img.cpu()
     img *= 256      # Convert back to RGB values
     img = torch.squeeze(img.type(torch.uint8), dim=0)   # Cast back to byte tensor and remove batch dimension
-    write_png(img, os.path.join(root, 'result.png'))
+
+    content_name, _ = os.path.splitext(CONTENT_IMAGE)
+    style_name, _ = os.path.splitext(STYLE_IMAGE)
+    write_png(img, os.path.join(root, f'{content_name}-{style_name}.png'))
+    exit(0)
 
 
 # Train
-for i in tqdm(range(NUM_ITERS), desc='Iteration'):
-    with torch.no_grad():
-        content_img.clamp_(0, 1)
+i = [0]
+while i[0] < NUM_ITERS:
+    def closure():
+        with torch.no_grad():
+            content_img.clamp_(0, 1)
 
-    optimizer.zero_grad()
-    model.forward(content_img)
+        optimizer.zero_grad()
+        model.forward(content_img)
 
-    # Calculate total loss from specified layers
-    content_loss = 0
-    for layer in model.content_loss_layers:
-        content_loss += layer.loss
-    content_loss *= CONTENT_WEIGHT
+        # Calculate total loss from specified layers
+        content_loss = 0
+        for layer in model.content_loss_layers:
+            content_loss += layer.loss
+        content_loss *= CONTENT_WEIGHT
 
-    style_loss = 0
-    for layer in model.style_loss_layers:
-        style_loss += layer.loss
-    style_loss *= STYLE_WEIGHT
+        style_loss = 0
+        for layer in model.style_loss_layers:
+            style_loss += layer.loss
+        style_loss *= STYLE_WEIGHT
 
-    total_loss = content_loss + style_loss
-    total_loss.backward()
+        total_loss = content_loss + style_loss
+        total_loss.backward()
+
+        # Occasionally save and print losses
+        if i[0] % 10 == 0:
+            writer.add_scalar('Loss/content', content_loss.item(), i[0])
+            writer.add_scalar('Loss/style', style_loss.item(), i[0])
+            writer.add_scalar('Loss/total', total_loss.item(), i[0])
+            np.append(content_losses, [[i[0]], [content_loss.item()]], axis=1)
+            np.append(style_losses, [[i[0]], [style_loss.item()]], axis=1)
+            np.append(total_losses, [[i[0]], [total_loss.item()]], axis=1)
+
+            print(f'\n[~] Iteration {i[0]}:')
+            print(f'    content_loss = {content_loss.item()}')
+            print(f'    style_loss = {style_loss.item()}')
+            print(f'    total_loss = {total_loss.item()}')
+
+        i[0] += 1
+        return content_loss + style_loss
 
     # Update the content image
-    optimizer.step()
-
-    # Occasionally save preliminary results
-    if i % 10 == 0:
-        writer.add_scalar('Loss/content', content_loss.item(), i)
-        writer.add_scalar('Loss/style', style_loss.item(), i)
-        writer.add_scalar('Loss/total', total_loss.item(), i)
-        np.append(content_losses, [[i], [content_loss.item()]], axis=1)
-        np.append(style_losses, [[i], [style_loss.item()]], axis=1)
-        np.append(total_losses, [[i], [total_loss.item()]], axis=1)
-        save()
+    optimizer.step(closure)
 
 # Save final result
-with torch.no_grad():
-    content_img.clamp_(0, 1)
-save()
+finish()
