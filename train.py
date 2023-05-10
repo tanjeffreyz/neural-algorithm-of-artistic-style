@@ -1,104 +1,98 @@
 import torch
 import os
-import argparse
 import numpy as np
-import torchvision.transforms as T
-from models import SimpleAutoencoder, ConvolutionalAutoencoder
-from torchvision.datasets.lfw import LFWPeople
-from torch.utils.data import DataLoader
+from torchvision.io import read_image, write_png
+from models import NeuralStyleTransfer
 from torch.utils.tensorboard import SummaryWriter
 from datetime import datetime
 from tqdm import tqdm
+from config import *
 
 
 writer = SummaryWriter()
 now = datetime.now()
 
-transform = T.Compose([
-    T.ToTensor(),
-    T.Resize((64, 64)),
-    T.Grayscale(),
-])
-train_set = LFWPeople(
-    root='data',
-    split='train',
-    download=True,
-    transform=transform
-)
-test_set = LFWPeople(
-    root='data',
-    split='test',
-    download=True,
-    transform=transform
-)
+# Load input images and normalize RGB to be in range [0, 1]
+content_img = read_image(os.path.join('input', 'content', CONTENT_IMAGE)).type(torch.FloatTensor)
+content_img /= 256
+content_img = torch.unsqueeze(content_img, 0).to(DEVICE)
 
-train_loader = DataLoader(train_set, batch_size=64, shuffle=True)
-test_loader = DataLoader(test_set, batch_size=64)
+style_img = read_image(os.path.join('input', 'style', STYLE_IMAGE)).type(torch.FloatTensor)
+style_img /= 256
+style_img = torch.unsqueeze(style_img, 0).to(DEVICE)
+
+# Build the model
+model = NeuralStyleTransfer(content_img, style_img, CONTENT_LAYERS, STYLE_LAYERS)
+
+# Optimizing content image to fit the style, freeze model weights
+content_img.requires_grad_(True)
+model.requires_grad_(False)
 
 # Optimizer
 optimizer = torch.optim.Adam(
-    model.parameters(),
-    lr=1E-3
+    [content_img],            # Optimizing content image, not model weights!
+    lr=LEARNING_RATE
 )
-
-# Loss Function
-loss_function = torch.nn.BCELoss()
 
 # Create folders for this run
 root = os.path.join(
-    'models',
-    str(model.__class__.__name__),
+    'output',
     now.strftime('%m_%d_%Y'),
     now.strftime('%H_%M_%S')
 )
-weight_dir = os.path.join(root, 'weights')
-if not os.path.isdir(weight_dir):
-    os.makedirs(weight_dir)
+if not os.path.isdir(root):
+    os.makedirs(root)
 
 # Metrics
-train_losses = np.empty((2, 0))
-test_losses = np.empty((2, 0))
+content_losses = np.empty((2, 0))
+style_losses = np.empty((2, 0))
+total_losses = np.empty((2, 0))
 
 
-def save_metrics():
-    np.save(os.path.join(root, 'train_losses'), train_losses)
-    np.save(os.path.join(root, 'test_losses'), test_losses)
+def save():
+    np.save(os.path.join(root, 'content_losses'), content_losses)
+    np.save(os.path.join(root, 'style_losses'), style_losses)
+    np.save(os.path.join(root, 'total_losses'), total_losses)
+    img = content_img.cpu()
+    img *= 256      # Convert back to RGB values
+    img = torch.squeeze(img.type(torch.uint8), dim=0)   # Cast back to byte tensor and remove batch dimension
+    write_png(img, os.path.join(root, 'result.png'))
 
 
 # Train
-for epoch in tqdm(range(50), desc='Epoch'):
-    model.train()
-    train_loss = 0
-    for data, _ in tqdm(train_loader, desc='Train', leave=False):
-        data = data.to(device)
+for i in tqdm(range(NUM_ITERS), desc='Iteration'):
+    with torch.no_grad():
+        content_img.clamp_(0, 1)
 
-        optimizer.zero_grad()
-        predictions = model.forward(data)
-        loss = loss_function(predictions, data)
-        loss.backward()
-        optimizer.step()
+    optimizer.zero_grad()
+    model.forward(content_img)
 
-        train_loss += loss.item() / len(train_loader)
-        del data
+    # Calculate total loss from specified layers
+    style_loss = 0
+    for layer in model.style_loss_layers:
+        style_loss += layer.loss
 
-    train_losses = np.append(train_losses, [[epoch], [train_loss]], axis=1)
-    writer.add_scalar('Loss/train', train_loss, epoch)
+    content_loss = 0
+    for layer in model.content_loss_layers:
+        content_loss += layer.loss
 
-    if epoch % 2 == 0:
-        model.eval()
-        with torch.no_grad():
-            test_loss = 0
-            for data, _ in tqdm(test_loader, desc='Test', leave=False):
-                data = data.to(device)
+    total_loss = CONTENT_WEIGHT * content_loss + STYLE_WEIGHT * style_loss
+    total_loss.backward()
 
-                predictions = model.forward(data)
-                loss = loss_function(predictions, data)
+    # Update the content image
+    optimizer.step()
 
-                test_loss += loss.item() / len(test_loader)
-                del data
-            test_losses = np.append(test_losses, [[epoch], [test_loss]], axis=1)
-            writer.add_scalar('Loss/test', test_loss, epoch)
-            save_metrics()
-            # torch.save(model.state_dict(), os.path.join(weight_dir, f'cp_{epoch}'))
-save_metrics()
-torch.save(model.state_dict(), os.path.join(weight_dir, 'final'))
+    # Occasionally save preliminary results
+    if i % 10 == 0:
+        writer.add_scalar('Loss/content', content_loss.item(), i)
+        writer.add_scalar('Loss/style', style_loss.item(), i)
+        writer.add_scalar('Loss/total', total_loss.item(), i)
+        np.append(content_losses, [[i], [content_loss.item()]], axis=1)
+        np.append(style_losses, [[i], [style_loss.item()]], axis=1)
+        np.append(total_losses, [[i], [total_loss.item()]], axis=1)
+        save()
+
+# Save final result
+with torch.no_grad():
+    content_img.clamp_(0, 1)
+save()

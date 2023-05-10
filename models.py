@@ -1,3 +1,4 @@
+import torch
 import torch.nn as nn
 import torchvision.transforms.functional
 from torchvision.models import vgg19
@@ -9,7 +10,7 @@ def get_gram_matrix(features):
     assert b == 1, 'Batch size must be 1'
 
     flattened = features.view(n, w * h)     # Vectorize each feature map
-    factor = 2 * n * w * h                  # Normalization factor described in paper
+    factor = n * w * h                  # Normalization factor described in paper
     return torch.matmul(flattened, flattened.transpose(0, 1)) / factor
 
 
