@@ -2,7 +2,7 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from torchvision.transforms.functional import resize
-from torchvision.models import vgg19
+from torchvision.models import vgg19, VGG19_Weights
 from config import DEVICE
 
 
@@ -65,7 +65,7 @@ class NeuralStyleTransfer(nn.Module):
         content_img = content_img.to(DEVICE)
 
         # Build the model based on PyTorch's pretrained VGG-19
-        vgg_model = vgg19(pretrained=True)
+        vgg_model = vgg19(weights=VGG19_Weights.IMAGENET1K_V1)
         vgg_layers = vgg_model.features.to(DEVICE).eval()
         self.model = nn.Sequential(Normalize().to(DEVICE))
 
