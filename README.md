@@ -40,6 +40,11 @@ Following [1], the input image starts as a white-noise tensor and is optimized d
       <td><img src="output/05_10_2023/15_46_12/ballerina-starry_night.png" width="300px"></td>
       <td><img src="output/05_10_2023/14_12_06/tubingen-starry_night.png" width="300px"></td>
     </tr>
+    <tr>
+      <td><img src="input/style/shipwreck.jpg" width="300px"></td>
+      <td><img src="output/05_10_2023/18_00_33/ballerina-shipwreck.png" width="300px"></td>
+      <td><img src="output/05_10_2023/18_04_11_loss_after_relu/tubingen-shipwreck.png" width="300px"></td>
+    </tr>
   </table>
 </div>
 
