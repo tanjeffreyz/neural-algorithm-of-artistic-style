@@ -48,8 +48,13 @@ Following [1], the input image starts as a white-noise tensor and is optimized d
   </table>
 </div>
 
-# Notes
-- lbfgs much better than adam
-- larger images have much finer textures, perhaps due to size of kernels staying constant between small vs large images?
-- style image has a big impact on whether the training is stable or not
-  - picasso.jpg is very stable but starry_night.jpg is very unstable
+## Notes
+The style images had a significant impact on the stability of the training loss. For `picasso.jpg` and `shipwreck.jpg`, the loss curve was smooth.
+However, when training on `starry_night.jpg`, the loss spiked rather often.
+
+The `LBFGS` optimizer converged much faster and produced much better results than `Adam`.
+
+## References
+
+[[1](https://arxiv.org/abs/1508.06576)] Leon A. Gatys, Alexander S. Ecker, Matthias Bethge. _A Neural Algorithm of Artistic Style_. 
+arXiv:1508.06576v2 [cs.CV] 2 Sep 2015.
