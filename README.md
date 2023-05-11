@@ -4,16 +4,16 @@ PyTorch implementation of "A Neural Algorithm of Artistic Style" by Leon A. Gaty
 
 ## Methods
 Instead of optimizing model weights, the approach described in [1] optimizes pixel values in the input image, which means this neural
-transfer works on images of arbitrary size. 
+transfer algorithm works on images of arbitrary size. 
 
 The `NeuralStyleTransfer` model is built directly from the layers in PyTorch's pretrained `vgg19` model. 
 However, its `MaxPool2d` layers are replaced with `AvgPool2d` layers because average-pooling was found to produce better results in [1]. 
-Furthermore, after each layer in specified in `CONTENT_LAYERS` and `STYLE_LAYERS`, an appropriate loss probe 
+Furthermore, after each layer specified in `CONTENT_LAYERS` and `STYLE_LAYERS`, an appropriate loss probe 
 (either `ContentLoss` or `StyleLoss`) was inserted to calculate the loss of the feature maps produced by those layers. 
-During training, the total content and style losses from these layers are weighted by `CONTENT_WEIGHT` and `STYLE_WEIGHT` respectively.
+During training, the total content and style losses from these layers are weighted by `CONTENT_WEIGHT` and `STYLE_WEIGHT` respectively to calculate the total loss.
 
-Before training, the given style image is resized to be the same shape as the content image so that the Gram matrices can be computed correctly.
-Also, gradient calculations for the model weights are turned off since those did not need to be tuned. 
+Before training, the given style image is resized to be the same shape as the content image so that their corresponding feature maps have the same dimensions and their Gram matrices can be computed correctly.
+Also, gradient calculations for the model weights are turned off since those do not need to be tuned. 
 Following [1], the input image starts as a white-noise tensor and is optimized during training to become the results shown below.
 
 
