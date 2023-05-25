@@ -2,7 +2,7 @@
 mlpi
 title: A Neural Algorithm of Artistic Style
 category: architectures/convolutional neural networks
-images:  ,,output/05_10_2023/13_48_08_lbfgs/ballerina-picasso.png,output/05_10_2023/14_12_06/tubingen-starry_night.png,output/05_10_2023/18_04_11_loss_after_relu/tubingen-shipwreck.png, output/05_10_2023/18_00_33/ballerina-shipwreck.png,
+images:  ,,output/05_10_2023/13_48_08_lbfgs/ballerina-picasso.png,output/05_10_2023/14_12_06/tubingen-starry_night.png,output/05_10_2023/18_04_11_loss_after_relu/tubingen-shipwreck.png, 
 -->
 
 
