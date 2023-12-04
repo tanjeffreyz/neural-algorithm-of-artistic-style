@@ -3,7 +3,7 @@ import torch
 
 DEVICE = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
-CONTENT_IMAGE = 'tubingen.jpg'
+CONTENT_IMAGE = 'ballerina.jpg'
 STYLE_IMAGE = 'composition.jpg'
 
 CONTENT_LAYERS = ['conv_4']
