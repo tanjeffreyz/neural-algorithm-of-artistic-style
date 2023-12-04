@@ -55,7 +55,7 @@ Following [1], the input image starts as a white-noise tensor and is optimized d
     </tr>
     <tr>
       <td><img src="input/style/composition.jpg" width="300px"></td>
-      <td><img src="output/12_04_2023/01_37_41/ballerina-composition.png" width="300px"></td>
+      <td><img src="output/12_04_2023/01_46_36/ballerina-composition.png" width="300px"></td>
       <td><img src="output/12_04_2023/01_38_45/tubingen-composition.png" width="300px"></td>
     </tr>
   </table>
