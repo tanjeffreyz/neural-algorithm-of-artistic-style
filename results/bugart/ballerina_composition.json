@@ -1,0 +1,21 @@
+{
+  "content": {
+    "name": "ballerina",
+    "layers": [
+      4
+    ],
+    "weight": 1
+  },
+  "style": {
+    "name": "composition",
+    "layers": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "weight": 1000000.0
+  },
+  "num_iters": 450
+}

@@ -35,28 +35,33 @@ Following [1], the input image starts as a white-noise tensor and is optimized d
         <br><br>
         Style Images ↓
       </th>
-      <td><img src="input/content/ballerina.jpg" width="300px"></td>
-      <td><img src="input/content/tubingen.jpg" width="300px"></td>
+      <td><img src="data/content/ballerina.jpg" width="300px"></td>
+      <td><img src="data/content/tubingen.jpg" width="300px"></td>
     </tr>
     <tr>
-      <td><img src="input/style/picasso.jpg" width="300px"></td>
-      <td><img src="output/05_10_2023/13_48_08_lbfgs/ballerina-picasso.png" width="300px"></td>
-      <td><img src="output/05_10_2023/14_49_57/tubingen-picasso.png" width="300px"></td>
+      <td><img src="data/style/picasso.jpg" width="300px"></td>
+      <td><img src="results/lbfgs/ballerina_picasso.png" width="300px"></td>
+      <td><img src="results/lbfgs/tubingen_picasso.png" width="300px"></td>
     </tr>
     <tr>
-      <td><img src="input/style/starry_night.jpg" width="300px"></td>
-      <td><img src="output/05_10_2023/15_46_12/ballerina-starry_night.png" width="300px"></td>
-      <td><img src="output/05_10_2023/14_12_06/tubingen-starry_night.png" width="300px"></td>
+      <td><img src="data/style/starry_night.jpg" width="300px"></td>
+      <td><img src="results/lbfgs/ballerina_starry_night.png" width="300px"></td>
+      <td><img src="results/lbfgs/tubingen_starry_night.png" width="300px"></td>
     </tr>
     <tr>
-      <td><img src="input/style/shipwreck.jpg" width="300px"></td>
-      <td><img src="output/05_10_2023/18_00_33/ballerina-shipwreck.png" width="300px"></td>
-      <td><img src="output/05_10_2023/18_04_11_loss_after_relu/tubingen-shipwreck.png" width="300px"></td>
+      <td><img src="data/style/shipwreck.jpg" width="300px"></td>
+      <td><img src="results/lbfgs/ballerina_shipwreck.png" width="300px"></td>
+      <td><img src="results/lbfgs/tubingen_shipwreck.png" width="300px"></td>
     </tr>
     <tr>
-      <td><img src="input/style/composition.jpg" width="300px"></td>
-      <td><img src="output/12_04_2023/01_46_36/ballerina-composition.png" width="300px"></td>
-      <td><img src="output/12_04_2023/01_49_05/tubingen-composition.png" width="300px"></td>
+      <td><img src="data/style/scream.jpg" width="300px"></td>
+      <td><img src="results/lbfgs/ballerina_scream.png" width="300px"></td>
+      <td><img src="results/lbfgs/tubingen_scream.png" width="300px"></td>
+    </tr>
+    <tr>
+      <td><img src="data/style/composition.jpg" width="300px"></td>
+      <td><img src="results/vary_style_weight/5E5/ballerina_composition.png" width="300px"></td>
+      <td><img src="results/lbfgs/tubingen_composition.png" width="300px"></td>
     </tr>
   </table>
 </div>

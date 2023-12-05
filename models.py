@@ -1,145 +1,129 @@
 import torch
-import torch.nn as nn
-import torch.nn.functional as F
-from torchvision.transforms.functional import resize
-from torchvision.models import vgg19, VGG19_Weights
-from config import DEVICE
+import torchvision
+from torch import nn
+from torch.nn.functional import mse_loss
 
 
-def get_gram_matrix(features):
-    b, n, w, h = features.shape
-    assert b == 1, 'Batch size must be 1'
-
-    flattened = features.view(n, w * h)     # Vectorize each feature map
-    factor = n * w * h                  # Normalization factor described in paper
-    return torch.matmul(flattened, flattened.transpose(0, 1)) / factor
+def get_gram_matrix(x):
+    _, c, w, h = x.shape
+    flat = x.view(c, w * h)
+    return torch.matmul(flat, flat.transpose(0, 1)) / (c * w * h)
 
 
-class Normalize(nn.Module):
-    def __init__(self):
+class ContentLossProbe(nn.Module):
+    def __init__(self, content):
         super().__init__()
-
-        # Normalization parameters used during VGG training
-        self.mean = torch.tensor([0.485, 0.456, 0.406]).to(DEVICE).view(-1, 1, 1)
-        self.std = torch.tensor([0.229, 0.224, 0.225]).to(DEVICE).view(-1, 1, 1)
+        self.content = content.detach()
+        self.loss = -1
 
     def forward(self, x):
-        return (x - self.mean) / self.std
-
-
-class ContentLoss(nn.Module):
-    def __init__(self, content_features):
-        super().__init__()
-        self.content_features = content_features.detach()
-        self.loss = None
-
-    def forward(self, x):
-        self.loss = F.mse_loss(self.content_features, x)
+        self.loss = mse_loss(self.content, x)
         return x
 
 
-class StyleLoss(nn.Module):
-    def __init__(self, style_features):
+class StyleLossProbe(nn.Module):
+    def __init__(self, style):
         super().__init__()
-        self.style_gram = get_gram_matrix(style_features.detach())
-        self.loss = None
+        self.style = style
+        self.style_gram_matrix = get_gram_matrix(self.style.detach())
+        self.loss = -1
 
     def forward(self, x):
-        x_gram = get_gram_matrix(x)
-        self.loss = F.mse_loss(self.style_gram, x_gram)
+        self.loss = mse_loss(
+            self.style_gram_matrix,
+            get_gram_matrix(x)
+        )
         return x
 
 
-class NeuralStyleTransfer(nn.Module):
-    def __init__(self,
-                 content_img, style_img,
-                 content_layers, style_layers):
+class NormalizeVGG19(nn.Module):
+    def forward(self, x):
+        """
+        Normalize image according to VGG-19's training parameters
+        https://pytorch.org/vision/main/models/generated/torchvision.models.vgg19.html
+        """
+
+        mean = torch.tensor([0.485, 0.456, 0.406]).unsqueeze(1).unsqueeze(1)
+        mean = mean.to(x.device)
+        std = torch.tensor([0.229, 0.224, 0.225]).unsqueeze(1).unsqueeze(1)
+        std = std.to(x.device)
+        return (x - mean) / std
+
+
+class StyleTransfer(nn.Module):
+    def __init__(self, c_img, s_img, c_layers=[], s_layers=[]):
         super().__init__()
 
-        assert len(content_img.shape) == 4, 'Content image tensor must be 4-dimensional: BxCxWxH'
-        assert len(style_img.shape) == 4, 'Style image tensor must be 4-dimensional: BxCxWxH'
+        max_depth = max(c_layers + s_layers)
+        resize = torchvision.transforms.Resize(c_img.shape[-2:])
+        s_img = resize(s_img)
 
-        # Resize style image to be same size as content image
-        style_img = resize(style_img, content_img.shape[-2:])
-        style_img = style_img.to(DEVICE)
-        content_img = content_img.to(DEVICE)
+        # Load pre-trained VGG-19 weights
+        weights = torchvision.models.VGG19_Weights.IMAGENET1K_V1
+        vgg = torchvision.models.vgg19(weights=weights)
+        vgg_features = vgg.features.to(c_img.device)
+        vgg_features.eval()
 
-        # Build the model based on PyTorch's pretrained VGG-19
-        vgg_model = vgg19(weights=VGG19_Weights.IMAGENET1K_V1)
-        vgg_layers = vgg_model.features.to(DEVICE).eval()
-        self.model = nn.Sequential(Normalize().to(DEVICE))
+        # Name each layer and insert loss probes
+        self.seq = nn.Sequential(NormalizeVGG19())
+        self.content_losses = []
+        self.style_losses = []
 
-        self.content_loss_layers = []
-        self.style_loss_layers = []
-
-        i = 0
-        for layer in vgg_layers.children():
+        depth = 0
+        for layer in vgg_features.children():
             if isinstance(layer, nn.Conv2d):
-                i += 1      # Conv layer signals a new block, increment block number
-                name = f'conv_{i}'
-            elif isinstance(layer, nn.BatchNorm2d):
-                name = f'bn_{i}'
-            elif isinstance(layer, nn.ReLU):
-                name = f'relu_{i}'
-                layer = nn.ReLU(inplace=False).to(DEVICE)
-            elif isinstance(layer, nn.MaxPool2d):
-                name = f'avgpool_{i}'
-                layer = nn.AvgPool2d(       # Paper said avg pool produced better results
-                    kernel_size=layer.kernel_size,
+                depth += 1
+                layer_name = 'conv'
+            if isinstance(layer, nn.MaxPool2d):
+                layer = nn.AvgPool2d(
                     stride=layer.stride,
-                    padding=layer.padding
-                ).to(DEVICE)
-            else:
-                raise NotImplementedError('This case should never have been reached')
+                    padding=layer.padding,
+                    kernel_size=layer.kernel_size
+                ).to(c_img.device)
+                layer_name = 'avgpool'
+            if isinstance(layer, nn.BatchNorm2d):
+                layer_name = 'bnorm'
+            if isinstance(layer, nn.ReLU):
+                layer = nn.ReLU(inplace=False).to(c_img.device)
+                layer_name = 'relu'
 
-            self.model.add_module(name, layer)
+            self.seq.add_module(f'{layer_name}_{depth}', layer)
 
-            # Add loss layers after specified layers
-            if name in content_layers:
-                content_features = self.model.forward(content_img)
-                content_loss_layer = ContentLoss(content_features).to(DEVICE)
-                self.model.add_module(f'content_loss_{i}', content_loss_layer)
-                self.content_loss_layers.append(content_loss_layer)
-            if name in style_layers:
-                style_features = self.model.forward(style_img)
-                style_loss_layer = StyleLoss(style_features).to(DEVICE)
-                self.model.add_module(f'style_loss_{i}', style_loss_layer)
-                self.style_loss_layers.append(style_loss_layer)
+            # Insert loss probe after ReLU layer if depth matches
+            # The paper mentions that only positive activations must contribute to the loss
+            if isinstance(layer, nn.ReLU):
+                if depth in c_layers:
+                    c_activations = self.seq(c_img)
+                    c_probe = ContentLossProbe(c_activations)
+                    c_probe = c_probe.to(c_img.device)
+                    self.content_losses.append(c_probe)
+                    self.seq.add_module(f'closs_{depth}', c_probe)
+                if depth in s_layers:
+                    s_activations = self.seq(s_img)
+                    s_probe = StyleLossProbe(s_activations)
+                    s_probe = s_probe.to(c_img.device)
+                    self.style_losses.append(s_probe)
+                    self.seq.add_module(f'sloss_{depth}', s_probe)
 
-        # Trim model until deepest loss layer to avoid unnecessary computation
-        for i in reversed(range(len(self.model))):
-            if isinstance(self.model[i], ContentLoss) or isinstance(self.model[i], StyleLoss):
-                break
-        self.model = self.model[:i+1]
+                # No more loss probes needed, discard rest of layers to save compute
+                if depth == max_depth:
+                    break
+
+        # Freeze the model weights
+        self.requires_grad_(False)
 
     def forward(self, x):
-        return self.model.forward(x)
+        return self.seq(x)
 
 
 if __name__ == '__main__':
-    import torch
-    from config import CONTENT_LAYERS, STYLE_LAYERS
-
-    # Check that loss layer dimensions are correct
-    test1 = torch.randn(1, 16, 32, 32)
-    test2 = torch.randn(1, 16, 32, 32)
-
-    print(get_gram_matrix(test1).shape)
-
-    cl = ContentLoss(test1)
-    cl.forward(test2)
-    print(cl.loss)
-
-    sl = StyleLoss(test1)
-    sl.forward(test2)
-    print(sl.loss)
-
-    # Check that model was built correctly
-    content_test = torch.randn(1, 3, 1920, 1080)
-    style_test = torch.randn(1, 3, 1234, 1234)
-    model = NeuralStyleTransfer(content_test, style_test, CONTENT_LAYERS, STYLE_LAYERS)
+    content_test = torch.rand(1, 3, 64, 64)
+    style_test = torch.rand(1, 3, 64, 512)
+    model = StyleTransfer(
+        content_test,
+        style_test,
+        c_layers=[4],
+        s_layers=[1, 2, 3, 4]
+    )
     print(model)
-
-    # Check that model weight gradients won't be calculated
-    model.requires_grad_(False)
-    assert all(not p.requires_grad for p in model.parameters())
+    print(all(not p.requires_grad for p in model.parameters()))

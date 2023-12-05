@@ -1,0 +1,22 @@
+{
+  "content": {
+    "name": "ballerina",
+    "layers": [
+      2
+    ],
+    "weight": 1
+  },
+  "style": {
+    "name": "starry_night",
+    "layers": [
+      1,
+      2,
+      3,
+      4,
+      5
+    ],
+    "weight": 1000000.0
+  },
+  "num_iters": 10000,
+  "learning_rate": 0.1
+}
