@@ -35,33 +35,77 @@ Following [1], the input image starts as a white-noise tensor and is optimized d
         <br><br>
         Style Images ↓
       </th>
-      <td><img src="data/content/ballerina.jpg" width="300px"></td>
-      <td><img src="data/content/tubingen.jpg" width="300px"></td>
+      <td>
+        <img src="data/content/ballerina.jpg" width="300px">
+      </td>
+      <td>
+        <img src="data/content/tubingen.jpg" width="300px">
+      </td>
     </tr>
     <tr>
-      <td><img src="data/style/picasso.jpg" width="300px"></td>
-      <td><img src="results/lbfgs/ballerina_picasso.png" width="300px"></td>
-      <td><img src="results/lbfgs/tubingen_picasso.png" width="300px"></td>
+      <td>
+        <img src="data/style/picasso.jpg" width="300px">
+      </td>
+      <td>
+        <img src="results/lbfgs/ballerina_picasso.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/ballerina_picasso.gif" width="300px"></details>
+      </td>
+      <td>
+        <img src="results/lbfgs/tubingen_picasso.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/tubingen_picasso.gif" width="300px"></details>
+      </td>
     </tr>
     <tr>
-      <td><img src="data/style/starry_night.jpg" width="300px"></td>
-      <td><img src="results/lbfgs/ballerina_starry_night.png" width="300px"></td>
-      <td><img src="results/lbfgs/tubingen_starry_night.png" width="300px"></td>
+      <td>
+        <img src="data/style/starry_night.jpg" width="300px">
+      </td>
+      <td>
+        <img src="results/lbfgs/ballerina_starry_night.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/ballerina_starry_night.gif" width="300px"></details>
+      </td>
+      <td>
+        <img src="results/lbfgs/tubingen_starry_night.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/tubingen_starry_night.gif" width="300px"></details>
+      </td>
     </tr>
     <tr>
-      <td><img src="data/style/shipwreck.jpg" width="300px"></td>
-      <td><img src="results/lbfgs/ballerina_shipwreck.png" width="300px"></td>
-      <td><img src="results/lbfgs/tubingen_shipwreck.png" width="300px"></td>
+      <td>
+        <img src="data/style/shipwreck.jpg" width="300px">
+      </td>
+      <td>
+        <img src="results/lbfgs/ballerina_shipwreck.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/ballerina_shipwreck.gif" width="300px"></details>
+      </td>
+      <td>
+        <img src="results/lbfgs/tubingen_shipwreck.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/tubingen_shipwreck.gif" width="300px"></details>
+      </td>
     </tr>
     <tr>
-      <td><img src="data/style/scream.jpg" width="300px"></td>
-      <td><img src="results/lbfgs/ballerina_scream.png" width="300px"></td>
-      <td><img src="results/lbfgs/tubingen_scream.png" width="300px"></td>
+      <td>
+        <img src="data/style/scream.jpg" width="300px">
+      </td>
+      <td>
+        <img src="results/lbfgs/ballerina_scream.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/ballerina_scream.gif" width="300px"></details>
+      </td>
+      <td>
+        <img src="results/lbfgs/tubingen_scream.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/tubingen_scream.gif" width="300px"></details>
+      </td>
     </tr>
     <tr>
-      <td><img src="data/style/composition.jpg" width="300px"></td>
-      <td><img src="results/vary_style_weight/5E5/ballerina_composition.png" width="300px"></td>
-      <td><img src="results/lbfgs/tubingen_composition.png" width="300px"></td>
+      <td>
+        <img src="data/style/composition.jpg" width="300px">
+      </td>
+      <td>
+        <img src="results/vary_style_weight/5E5/ballerina_composition.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/vary_style_weight/5E5/ballerina_composition.gif" width="300px"></details>
+      </td>
+      <td>
+        <img src="results/lbfgs/tubingen_composition.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/tubingen_composition.gif" width="300px"></details>
+      </td>
     </tr>
   </table>
 </div>
