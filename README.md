@@ -99,8 +99,8 @@ Following [1], the input image starts as a white-noise tensor and is optimized d
         <img src="data/style/composition.jpg" width="300px">
       </td>
       <td>
-        <img src="results/vary_style_weight/5E5/ballerina_composition.png" width="300px">
-        <details><summary><b>Video</b></summary><img src="results/vary_style_weight/5E5/ballerina_composition.gif" width="300px"></details>
+        <img src="results/lbfgs/ballerina_composition.png" width="300px">
+        <details><summary><b>Video</b></summary><img src="results/lbfgs/ballerina_composition.gif" width="300px"></details>
       </td>
       <td>
         <img src="results/lbfgs/tubingen_composition.png" width="300px">
