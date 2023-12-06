@@ -7,7 +7,7 @@ from torch.nn.functional import mse_loss
 def get_gram_matrix(x):
     _, c, w, h = x.shape
     flat = x.view(c, w * h)
-    return torch.matmul(flat, flat.transpose(0, 1)) / (c * w * h)
+    return torch.mm(flat, flat.transpose(0, 1)) / (c * w * h)
 
 
 class ContentLossProbe(nn.Module):
