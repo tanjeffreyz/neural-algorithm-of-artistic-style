@@ -2,7 +2,7 @@
   "content": {
     "name": "tubingen",
     "layers": [
-      10
+      13
     ],
     "weight": 1
   },
@@ -17,5 +17,6 @@
     ],
     "weight": 1000000.0
   },
-  "num_iters": 600
+  "num_iters": 600,
+  "noise": 0.01
 }
