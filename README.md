@@ -22,7 +22,7 @@ During training, the total content and style losses from these layers are weight
 
 Before training, the given style image is resized to be the same shape as the content image so that their corresponding feature maps have the same dimensions and their Gram matrices can be computed correctly.
 Also, gradient calculations for the model weights are turned off since those do not need to be tuned. 
-Following [1], the input image starts as a white-noise tensor and is optimized during training to become the results shown below.
+The final image is initialized as the original content image with some added white-noise and is optimized during training to become the results shown below.
 
 
 ## Results
